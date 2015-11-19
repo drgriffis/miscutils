@@ -3,6 +3,8 @@ Utility functions for use in any situation.
 
 aka All the stuff I'm tired of copy-pasting :P
 '''
+import codecs
+
 def laxIncrement(dct, key):
     if not dct.has_key(key):
         dct[key] = 1
@@ -16,8 +18,8 @@ def expectKey(dct, key, valIfNew):
     else:
         return True
 
-def dump(fname, contents):
-    f = open(fname, 'w')
+def dump(fname, contents, encoding='ascii'):
+    f = codecs.open(fname, 'w', encoding)
     f.write(contents)
     f.close()
 
@@ -31,11 +33,19 @@ def readCSV(fname, sep=',', readas=str):
     lns = readlines(fname)
     return [[readas(c.strip()) for c in row.split(sep)] for row in lns]
 
-def writeCSV(fname, csv, sep=','):
-    dump(fname, toCSV(csv, sep))
+def writeCSV(fname, csv, sep=',', encoding='ascii', useUnicode=False):
+    '''
+    If useUnicode is True and encoding is unspecified, will default to UTF-8 encoding.
+    '''
+    if useUnicode:
+        if encoding == 'ascii': encoding = 'utf-8'
+        writeas = unicode
+    else:
+        writeas = str
+    dump(fname, toCSV(csv, sep, writeas=writeas), encoding=encoding)
 
-def toCSV(data, sep=','):
-    return '\n'.join([sep.join([str(c) for c in row]) for row in data])
+def toCSV(data, sep=',', writeas=str):
+    return '\n'.join([sep.join([writeas(c) for c in row]) for row in data])
 
 def bitflag(bln):
     if bln: return 1
