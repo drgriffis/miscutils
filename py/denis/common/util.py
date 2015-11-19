@@ -27,9 +27,9 @@ def readlines(fname):
     f.close()
     return lns
 
-def readCSV(fname, sep=','):
+def readCSV(fname, sep=',', readas=str):
     lns = readlines(fname)
-    return [[c.strip() for c in row.split(sep)] for row in lns]
+    return [[readas(c.strip()) for c in row.split(sep)] for row in lns]
 
 def writeCSV(fname, csv, sep=','):
     dump(fname, toCSV(csv, sep))
