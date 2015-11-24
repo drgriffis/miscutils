@@ -5,11 +5,11 @@ aka All the stuff I'm tired of copy-pasting :P
 '''
 import codecs
 
-def laxIncrement(dct, key):
+def laxIncrement(dct, key, by=1):
     if not dct.has_key(key):
-        dct[key] = 1
+        dct[key] = by
     else:
-        dct[key] += 1
+        dct[key] += by
 
 def expectKey(dct, key, valIfNew):
     if not dct.has_key(key):
