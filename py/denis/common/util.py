@@ -4,6 +4,7 @@ Utility functions for use in any situation.
 aka All the stuff I'm tired of copy-pasting :P
 '''
 import codecs
+from replacer import replacer
 
 def laxIncrement(dct, key, by=1):
     if not dct.has_key(key):
@@ -68,3 +69,7 @@ def transformDict(dct, tfrm):
 def reverseDict(dct):
     reverse = lambda key, val: (val, key)
     return transformDict(dct, reverse)
+
+def replace(text, repls):
+    pattern = replacer.prepare(repls)
+    return replacer.apply(pattern, text)
