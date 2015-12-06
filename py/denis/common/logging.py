@@ -1,9 +1,11 @@
 import sys
+import time
 
 class log:
     logfile=sys.stdout
     stopped=False
     tracker=None
+    timer=None
     autoflush=True
 
     @staticmethod
@@ -70,6 +72,19 @@ class log:
             else:
                 raise Exception('Tracker is complete!')
 
+    @staticmethod
+    def startTimer(message=None):
+        if message:
+            log.writeln(message)
+        log.timer = Timer()
+        log.timer.start()
+
+    @staticmethod
+    def stopTimer(frmt='>>Completed in {0} sec.'):
+        if log.timer:
+            log.timer.stop()
+        log.writeln(str.format(frmt, log.timer.elapsed()))
+
 class ProgressTracker:
     def __init__(self, total=None, onIncrement=None, writeInterval=1):
         self.total = total
@@ -87,3 +102,28 @@ class ProgressTracker:
                 # only call 2-arg onIncrement if we have a total we're counting towards
                 if self.total: self.onIncrement(self.current, self.total)
                 else: self.onIncrement(self.current)
+
+class Timer:
+    def __init__(self):
+        self.startTime = 0
+        self.stopTime = 0
+        self.started = False
+
+    def start(self):
+        if not self.started:
+            self.startTime = time.time()
+            self.started = True
+        else:
+            raise Exception('Timer already started!')
+
+    def stop(self):
+        if self.started:
+            self.stopTime = time.time()
+        else:
+            raise Exception('Timer already stopped!')
+
+    def elapsed(self):
+        if not self.started:
+            return self.stopTime - self.startTime
+        else:
+            return time.time() - self.startTime
