@@ -78,12 +78,17 @@ class log:
             log.writeln(message)
         log.timer = Timer()
         log.timer.start()
+        return log.timer
 
     @staticmethod
-    def stopTimer(frmt='>>Completed in {0} sec.'):
-        if log.timer:
-            log.timer.stop()
-        log.writeln(str.format(frmt, log.timer.elapsed()))
+    def stopTimer(timer=None, frmt='>>Completed in {0} sec.\n'):
+        if timer or log.timer:
+            if not timer: timer = log.timer
+            timer.stop()
+            elpsed = timer.elapsed()
+            log.writeln(str.format(frmt, log.timer.elapsed()))
+        else:
+            raise Exception('No timer to stop!')
 
 class ProgressTracker:
     def __init__(self, total=None, onIncrement=None, writeInterval=1):
@@ -119,6 +124,7 @@ class Timer:
     def stop(self):
         if self.started:
             self.stopTime = time.time()
+            self.started = False
         else:
             raise Exception('Timer already stopped!')
 
