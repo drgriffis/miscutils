@@ -22,7 +22,8 @@ class replacer:
         return (pattern, rep)
 
     @staticmethod
-    def apply((pattern, rep), text):
+    def apply(pattern_rep, text):
         '''Uses a compiled pattern from .prepare() to replace all instances of desired strings in text
         '''
+        pattern, rep = pattern_rep
         return pattern.sub(lambda m: rep[re.escape(m.group(0))], text)
