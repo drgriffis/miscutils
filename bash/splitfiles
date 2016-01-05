@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+usage() {
+cat << EOF
+Copies the contents of a single large directory into several disjoint subdirectories for parallel processing.
+
+Usage: `basename $0` SRCDIR DESTDIR NUMSPLITS [EXT=*]
+
+    SRCDIR     the large directory to be split
+    DESTDIR    where to put the separate subdirectories
+    NUMSPLITS  number of disjoint subdirectories to create
+    EXT        [optional] file extension to limit splitting to; defaults to all files
+EOF
+}
+srcdir=$1
+destdir=$2
+numsplits=$3
+ext=$4
+if [ -z $srcdir ] || [ -z $destdir ] || [ -z $numsplits ] ; then
+    usage
+    exit
+fi
+
+if [ ! -d $destdir ]; then
+    mkdir -p $destdir
+fi
+
+cat << EOF
+Splitting directory to enable parallel processing:
+    Source files in: $srcdir
+    Splitting into: $destdir
+    # of splits: $numsplits
+
+EOF
+
+counter=0
+for f in $srcdir/*$ext
+do
+    split=$((counter % numsplits))
+    if [ ! -d $destdir/$split ]; then
+        mkdir -p $destdir/$split
+    fi
+    cp $f $destdir/$split/
+    counter=$((counter + 1))
+    if [ $((counter % 50)) -eq 0 ]; then
+        echo -n .
+    fi
+done
+
+echo; echo; echo "Split files into ${numsplits}."
