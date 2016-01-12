@@ -1,0 +1,50 @@
+#!/bin/bash
+
+function usage {
+cat << EOF
+Daily lab notebook entries.
+
+Usage: `basename $0` [DATE]
+
+    DATE  date to see daily notes for; defaults to current date
+EOF
+}
+
+while getopts "h" OPTION; do
+    case $OPTION in
+        h)
+            usage
+            exit
+            ;;
+    esac
+done
+
+labnotebook=`myscriptconf get daily labnotebook`
+defaultproject=`myscriptconf get daily defaultproject`
+defaultext=`myscriptconf get daily defaultext`
+
+currentdate=`date "+%Y-%m-%d"`
+trgdate=$1
+if [ -z $trgdate ]; then
+    trgdate=$currentdate
+fi
+folder=`date "+%Y/%m"`
+
+if [ -z $EDITOR ]; then
+    echo "Please set a default editor in the EDITOR environment variable!"
+    exit
+fi
+
+fpath=$labnotebook/dailies/$folder/${trgdate}.${defaultext}
+
+## default content if new note
+if [ ! -e $fpath ]; then
+    echo "Daily notes for $trgdate" >> $fpath
+    echo >> $fpath
+    echo "### Project: $defaultproject ###" >> $fpath
+    echo >> $fpath
+    echo "  - " >> $fpath
+fi
+
+## drop into editing
+$EDITOR $fpath

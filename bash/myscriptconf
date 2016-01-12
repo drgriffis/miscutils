@@ -1,0 +1,69 @@
+#!/bin/bash
+
+function usage {
+cat << EOF
+Edit mode:
+    `basename $0` edit
+
+Get mode:
+    `basename $0` get SECTION KEY
+
+List mode:
+    `basename $0` list [SECTION]
+EOF
+}
+
+# config files are host-specific
+thisdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+confname=$thisdir/`hostname | awk -F '.' '{ print $1 }'`.conf
+
+# create an empty config file if one does not exist
+if [ ! -e $confname ]; then
+    cp $thisdir/.template.conf $confname
+fi
+
+if [ "$1" = "edit" ]; then
+    if [ -z $EDITOR ]; then
+        echo 'Need to have set EDITOR environment variable to edit'
+        exit
+    fi
+    $EDITOR $confname
+
+elif [ "$1" = "get" ]; then
+    section=$2
+    key=$3
+    if [ -z $section ] || [ -z $key ]; then
+        usage
+        exit
+    fi
+    awk -F "=" '{
+        if (match($0, /^\[.*\]$/)) {
+            cursection=$0
+        } else if (match($1, /^'$key'$/) && match(cursection, /\['$section'\]/)) {
+            print $2
+        }
+    }' $confname
+
+elif [ "$1" = "list" ]; then
+    section=$2
+    if [ -z $section ]; then
+        awk -F "=" '{
+            if (match($0, /^\[.*\]$/)) {
+                print $0
+            }
+        }' $confname
+    else
+        echo "Keys in section [$section]:"
+        awk -F "=" '{
+            if (match($0, /^\[.*\]$/)) {
+                cursection=$0
+            } else if (match(cursection, /\['$section'\]/) && NF>1) {
+                print $1
+            }
+        }' $confname
+    fi
+
+else
+    usage
+    exit
+fi
