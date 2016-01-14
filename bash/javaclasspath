@@ -1,0 +1,45 @@
+#!/bin/bash
+
+function usage {
+cat << EOF
+Creates a system-specific classpath string for Java.
+(Can be used to include multiple .jar files)
+
+Usage: `basename $0` CLASSPATH
+Alternate: `basename $0` DIR1 [DIR2 [DIR3 [...]]]
+EOF
+}
+
+if [ -z $1 ]; then
+    usage
+    exit
+fi
+
+## determine system
+system=
+case "$(uname -s)" in
+    Darwin|Linux)
+        system="unix"
+        ;;
+    CYGWIN*|MINGW32*|MSYS*)
+        system="windows"
+        ;;
+    *)
+        echo "Unknown system"
+        exit 1
+        ;;
+esac
+
+fullcp=
+for cp in "$@"
+do
+    if [[ "$system" = "windows" ]]; then
+        echo $cp > .tmp
+        fullcp="${fullcp};`sed -e 's/:/;/g' .tmp`"
+        rm .tmp
+    else
+        fullcp=${fullcp}:${cp}
+    fi
+done
+
+echo $fullcp
