@@ -5,8 +5,11 @@ cat << EOF
 Creates a system-specific classpath string for Java.
 (Can be used to include multiple .jar files)
 
-Usage: `basename $0` CLASSPATH
-Alternate: `basename $0` DIR1 [DIR2 [DIR3 [...]]]
+Usage: `basename $0` [OPTIONS] CP1 [CP2 [CP3 [...]]]
+    CP1, CP2, CP3, ...   classpaths or directories/files to include in the classpath
+
+Options:
+    -n   separate classpath entries by newlines instead of :/;
 EOF
 }
 
@@ -14,6 +17,16 @@ if [ -z $1 ]; then
     usage
     exit
 fi
+
+newlinesep=false
+while getopts "n" OPTION; do
+    case $OPTION in
+        n)
+            newlinesep=true
+            ;;
+    esac
+done
+shift $(( OPTIND - 1 ))
 
 ## determine system
 system=
@@ -33,13 +46,17 @@ esac
 fullcp=
 for cp in "$@"
 do
-    if [[ "$system" = "windows" ]]; then
-        echo $cp > .tmp
-        fullcp="${fullcp};`sed -e 's/:/;/g' .tmp`"
-        rm .tmp
+    if [ $newlinesep = true ]; then
+        fullcp="${fullcp}\n${cp}"
     else
-        fullcp=${fullcp}:${cp}
+        if [[ "$system" = "windows" ]]; then
+            echo $cp > .tmp
+            fullcp="${fullcp};`sed -e 's/:/;/g' .tmp`"
+            rm .tmp
+        else
+            fullcp=${fullcp}:${cp}
+        fi
     fi
 done
 
-echo $fullcp
+echo -e $fullcp
