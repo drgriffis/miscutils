@@ -23,6 +23,8 @@ labnotebook=`myscriptconf get daily labnotebook`
 defaultproject=`myscriptconf get daily defaultproject`
 defaultext=`myscriptconf get daily defaultext`
 
+mostrecent=`cat $labnotebook/.mostrecent | awk -F '-' '{ print $1 "/" $2 }'`/`cat $labnotebook/.mostrecent`
+
 currentdate=`date "+%Y-%m-%d"`
 trgdate=$1
 if [ -z $trgdate ]; then
@@ -41,10 +43,19 @@ fpath=$labnotebook/dailies/$folder/${trgdate}.${defaultext}
 if [ ! -e $fpath ]; then
     echo "Daily notes for $trgdate" >> $fpath
     echo >> $fpath
+    echo "### TODOs ###" >> $fpath
+    # port over todos from previous day
+    grep "TODO" $labnotebook/dailies/${mostrecent}.${defaultext} | grep -v "###" | \
+        sed -e "s/\**TODO\**//" | \
+        sed -e "s/^ *[-+\*] */  - /" >> $fpath
+    echo >> $fpath
     echo "### Project: $defaultproject ###" >> $fpath
     echo >> $fpath
     echo "  - " >> $fpath
 fi
+
+## update .mostrecent file
+echo $currentdate > $labnotebook/.mostrecent
 
 ## drop into editing
 $EDITOR $fpath
