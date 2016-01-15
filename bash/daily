@@ -24,6 +24,7 @@ defaultproject=`myscriptconf get daily defaultproject`
 defaultext=`myscriptconf get daily defaultext`
 
 mostrecent=`cat $labnotebook/.mostrecent | awk -F '-' '{ print $1 "/" $2 }'`/`cat $labnotebook/.mostrecent`
+mostrecent=$labnotebook/dailies/${mostrecent}.${defaultext}
 
 currentdate=`date "+%Y-%m-%d"`
 trgdate=$1
@@ -44,10 +45,29 @@ if [ ! -e $fpath ]; then
     echo "Daily notes for $trgdate" >> $fpath
     echo >> $fpath
     echo "### TODOs ###" >> $fpath
-    # port over todos from previous day
-    grep "TODO" $labnotebook/dailies/${mostrecent}.${defaultext} | grep -v "###" | \
-        sed -e "s/\**TODO\**//" | \
-        sed -e "s/^ *[-+\*] */  - /" >> $fpath
+    # port over incomplete todos from previous day
+    awk -F "###" '{ 
+            if (NF > 1) {    # "###" was present, section header
+                curproj=$2 
+            } else if (match(curproj, /TODOs/)) {   # in the TODOs section
+                print $0 
+            } 
+        }' $mostrecent       `#pull all lines in the TODOs section` \
+        | grep '^ *- \[ \]'  `#keep only those with unchecked checkboxes` \
+        >> $fpath
+    # port over new todos from previous day
+    awk -F "###" '{
+            if (NF > 1) {
+                curproj = $2
+            } else if (match($0, /\*\*TODO\*\*/)) {
+                sub(/ +$/, "", curproj);  # remove trailing whitespace from current project name
+                print curproj ": " $0
+            }
+        }' $mostrecent                  `#extract all **TODO** lines with their containing project` \
+        | sed -e 's/ *Project: *//'     `#remove Project: label` \
+        | sed -e 's/ *- *\**TODO\**//'  `#remove **TODO** flag` \
+        | sed -e 's/^/  - [ ] /'        `#prepend todo checkbox format` \
+        >> $fpath
     echo >> $fpath
     echo "### Project: $defaultproject ###" >> $fpath
     echo >> $fpath
