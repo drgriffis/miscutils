@@ -10,11 +10,16 @@ Usage: `basename $0` [DATE]
 EOF
 }
 
-while getopts "h" OPTION; do
+printpath=false
+while getopts "hp" OPTION; do
     case $OPTION in
         h)
             usage
             exit
+            ;;
+        p)
+            printpath=true
+            shift $(( OPTIND - 1))
             ;;
     esac
 done
@@ -41,6 +46,10 @@ if [ -z $EDITOR ]; then
 fi
 
 fpath=$labnotebook/dailies/$folder/${trgdate}.${defaultext}
+if [ $printpath = true ]; then
+    echo $fpath
+    exit
+fi
 
 ## default content if starting new note for today
 if [ ! -e $fpath ] && [ $istoday = true ]; then
