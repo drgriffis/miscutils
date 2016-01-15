@@ -28,8 +28,10 @@ mostrecent=$labnotebook/dailies/${mostrecent}.${defaultext}
 
 currentdate=`date "+%Y-%m-%d"`
 trgdate=$1
+istoday=false
 if [ -z $trgdate ]; then
     trgdate=$currentdate
+    istoday=true
 fi
 folder=`date "+%Y/%m"`
 
@@ -40,10 +42,11 @@ fi
 
 fpath=$labnotebook/dailies/$folder/${trgdate}.${defaultext}
 
-## default content if new note
-if [ ! -e $fpath ]; then
+## default content if starting new note for today
+if [ ! -e $fpath ] && [ $istoday = true ]; then
     echo "Daily notes for $trgdate" >> $fpath
     echo >> $fpath
+
     echo "### TODOs ###" >> $fpath
     # port over incomplete todos from previous day
     awk -F "###" '{ 
@@ -55,6 +58,7 @@ if [ ! -e $fpath ]; then
         }' $mostrecent       `#pull all lines in the TODOs section` \
         | grep '^ *- \[ \]'  `#keep only those with unchecked checkboxes` \
         >> $fpath
+
     # port over new todos from previous day
     awk -F "###" '{
             if (NF > 1) {
@@ -69,13 +73,20 @@ if [ ! -e $fpath ]; then
         | sed -e 's/^/  - [ ] /'        `#prepend todo checkbox format` \
         >> $fpath
     echo >> $fpath
+
+    # start section for default project
     echo "### Project: $defaultproject ###" >> $fpath
     echo >> $fpath
     echo "  - " >> $fpath
+
+    # update .mostrecent file
+    echo $currentdate > $labnotebook/.mostrecent
 fi
 
-## update .mostrecent file
-echo $currentdate > $labnotebook/.mostrecent
-
-## drop into editing
-$EDITOR $fpath
+## if a new note for a different day, don't create a file
+if [ ! -e $fpath ] && [ $istoday = false ]; then
+    echo "No notes for $trgdate!"
+## otherwise, drop into editing
+else
+    $EDITOR $fpath
+fi
