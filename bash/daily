@@ -37,8 +37,16 @@ istoday=false
 if [ -z $trgdate ]; then
     trgdate=$currentdate
     istoday=true
+else
+    # fill in current year/month if necessary
+    nf=`echo $trgdate | awk -F "-" '{ print NF }'`
+    if [[ $nf = 1 ]]; then
+        trgdate=`date "+%Y-%m"`-${trgdate}
+    elif [[ $nf = 2 ]]; then
+        trgdate=`date "+%Y"`-${trgdate}
+    fi
 fi
-folder=`date "+%Y/%m"`
+folder=`echo $trgdate | awk -F "-" '{ print $1 "/" $2 }'`
 
 if [ -z $EDITOR ]; then
     echo "Please set a default editor in the EDITOR environment variable!"
@@ -47,7 +55,11 @@ fi
 
 fpath=$labnotebook/dailies/$folder/${trgdate}.${defaultext}
 if [ $printpath = true ]; then
-    echo $fpath
+    if [ -e $fpath ]; then
+        echo $fpath
+    else
+        echo "No notes for $trgdate!"
+    fi
     exit
 fi
 
