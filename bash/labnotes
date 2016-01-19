@@ -1,0 +1,26 @@
+#!/bin/bash
+#
+# Navigation script for jumping to project-specific lab notes
+# Includes auto-completion
+#
+# To include as a command, add line to .bashrc:
+#   source "THISDIR/labnotes"
+#
+
+function labnotes() {
+    labnotebook=`myscriptconf get daily labnotebook`
+    cd $labnotebook/$1
+}
+
+# auto-complete with project subdirectories in lab notebook
+function _labnotes() {
+    local cur=${COMP_WORDS[COMP_CWORD]}
+    COMPREPLY=($(
+        compgen -W "$(
+            ls /Users/griffisdr/Dropbox/research/lab-notebook/ \
+            | grep -v dailies \
+            | grep -v meetings
+        )" -- "$cur"
+    ))
+}
+complete -F _labnotes labnotes
