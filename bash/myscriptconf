@@ -3,23 +3,28 @@
 function usage {
 cat << EOF
 Edit mode:
-    `basename $0` edit
+    `basename $0` edit            Edit this machine's config
+    `basename $0` edit template   Edit the base config template
 
 Get mode:
     `basename $0` get SECTION KEY
 
 List mode:
     `basename $0` list [SECTION]
+
+Edit template:
+    `basename $0` edit template
 EOF
 }
 
 # config files are host-specific
 thisdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 confname=$thisdir/`hostname | awk -F '.' '{ print $1 }'`.conf
+template=$thisdir/.template.conf
 
 # create an empty config file if one does not exist
 if [ ! -e $confname ]; then
-    cp $thisdir/.template.conf $confname
+    cp $template $confname
 fi
 
 if [ "$1" = "edit" ]; then
@@ -27,7 +32,11 @@ if [ "$1" = "edit" ]; then
         echo 'Need to have set EDITOR environment variable to edit'
         exit
     fi
-    $EDITOR $confname
+    if [ "$2" = "template" ]; then
+        $EDITOR $template
+    else
+        $EDITOR $confname
+    fi
 
 elif [ "$1" = "get" ]; then
     section=$2
