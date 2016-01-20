@@ -1,0 +1,134 @@
+#!/bin/bash
+
+function usage {
+cat << EOF
+Notes for meeting prep.
+
+Usage: `basename $0` WITH [OPTIONS]
+
+    WITH   person/group the meeting was with
+
+Options:
+    -h        show this help and exit
+    -d DATE   start notes for a meeting on DATE (yyyy-mm-dd format)
+    -p INDEX  show notes for prior meeting, INDEX steps back
+    -P        show notes for most recent meeting (equivalent to -p 1)
+EOF
+}
+
+function getmeetings {
+    ls -R $labnotebook/meetings \
+    | grep "_${with}.${defaultext}" \
+    | sort -r -n
+}
+
+OPTIND=$(( OPTIND + 1 ))
+listmeetings=false
+trgdate=
+index=
+while getopts "hld:p:P" OPTION; do
+    case $OPTION in
+        h)
+            usage
+            exit
+            ;;
+        l)
+            listmeetings=true;
+            ;;
+        d)
+            trgdate=$OPTARG
+            ;;
+        p)
+            index=$OPTARG
+            ;;
+        P)
+            index=1
+            ;;
+    esac
+done
+
+with=$1
+if [ -z $with ]; then
+    usage
+    exit
+else
+    # get full name of meeting person
+    fullwith="`myscriptconf get meetings fullwith \
+        | sed -e 's/;/|/g' \
+        | awk -F '|' '{
+              for (i=1; i<NF; i++) {
+                  if (match($(i),/^ *'$with' *$/)) {
+                      print $(i+1)
+                  }
+              }
+          }'`"
+    # if no full name stored, default to $with
+    if [ -z "$fullwith" ]; then
+        fullwith=$with
+    fi
+fi
+
+if [ -z $EDITOR ]; then
+    echo "Please set a default editor in the EDITOR environment variable!"
+    exit
+fi
+
+labnotebook=`myscriptconf get labnotebook location`
+defaultext=`myscriptconf get meetings defaultext`
+
+if [ $listmeetings = true ]; then
+    meetings=$(getmeetings \
+        | sed -e "s/_${with}\.${defaultext}//"
+    )
+    for m in $meetings; do
+        i=$(( i + 1 ))
+        echo $i - $m
+    done
+    exit
+fi
+
+currentdate=`date "+%Y-%m-%d"`
+if [ -z $trgdate ]; then
+    trgdate=$currentdate
+fi
+
+if [ -z $index ]; then
+    currentdate=`date "+%Y-%m-%d"`
+    trgdir=`date "+%Y/%m"`
+    trgf=$trgdir/${trgdate}_${with}.${defaultext}
+else
+    meetings=$(getmeetings)
+    if [[ ${#meetings[@]} < $index ]]; then
+        echo "You don't have enough of a history with $fullwith to go $index meetings back."
+        exit
+    fi
+    trgmeeting=$(
+        echo $meetings \
+        | head -n $index \
+        | tail -n 1
+    )
+    trgdir=`echo $trgmeeting | awk -F '-' '{ print $1 "/" $2 }'`
+    trgf=$trgdir/$trgmeeting
+fi
+trgf=$labnotebook/meetings/$trgf
+
+## if new meeting, create default content
+if [ ! -e $trgf ] && [ -z $index ]; then
+    echo "Meeting notes: $fullwith ($trgdate)" > $trgf
+    echo >> $trgf
+    echo "### Agenda ###" >> $trgf
+    echo "  - " >> $trgf
+    echo >> $trgf
+    echo >> $trgf
+    echo "### Post notes ###" >> $trgf
+    echo "  - " >> $trgf
+fi
+
+## if looking for non-existent prior meeting, warn
+if [ ! -e $trgf ] && [ ! -z $index ]; then
+    echo "No prior meetings with $fullwith!"
+
+## otherwise, drop into editor
+else
+    $EDITOR $trgf
+fi
