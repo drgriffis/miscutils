@@ -98,22 +98,28 @@ if [ -z $index ]; then
     trgf=$trgdir/${trgdate}_${with}.${defaultext}
 else
     meetings=$(getmeetings)
-    if [[ ${#meetings[@]} < $index ]]; then
+    count=0; for m in $meetings; do count=$(( count + 1 )); done
+    if [[ $count = 0 ]]; then
+        echo "No prior meetings with $fullwith!"
+        exit
+    elif [[ $count < $index ]]; then
         echo "You don't have enough of a history with $fullwith to go $index meetings back."
         exit
     fi
-    trgmeeting=$(
-        echo $meetings \
-        | head -n $index \
-        | tail -n 1
-    )
+    count=0
+    for m in $meetings; do
+        count=$(( count + 1 ))
+        if [[ $count = $index ]]; then
+            trgmeeting=$m
+        fi
+    done
     trgdir=`echo $trgmeeting | awk -F '-' '{ print $1 "/" $2 }'`
     trgf=$trgdir/$trgmeeting
 fi
 trgf=$labnotebook/meetings/$trgf
 
 ## if new meeting, create default content
-if [ ! -e $trgf ] && [ -z $index ]; then
+if [ ! -e "$trgf" ] && [ -z "$index" ]; then
     echo "Meeting notes: $fullwith ($trgdate)" > $trgf
     echo >> $trgf
     echo "### Agenda ###" >> $trgf
@@ -125,8 +131,8 @@ if [ ! -e $trgf ] && [ -z $index ]; then
 fi
 
 ## if looking for non-existent prior meeting, warn
-if [ ! -e $trgf ] && [ ! -z $index ]; then
-    echo "No prior meetings with $fullwith!"
+if [ ! -e "$trgf" ] && [ ! -z "$index" ]; then
+    echo "No meeting on record with $fullwith on $trgdate!"
 
 ## otherwise, drop into editor
 else
