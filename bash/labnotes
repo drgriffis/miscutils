@@ -8,7 +8,7 @@
 #
 
 function labnotes() {
-    labnotebook=`myscriptconf get daily labnotebook`
+    labnotebook=`myscriptconf get labnotebook location`
     cd $labnotebook/$1
 }
 
