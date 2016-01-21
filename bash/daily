@@ -11,7 +11,8 @@ EOF
 }
 
 printpath=false
-while getopts "hp" OPTION; do
+viewnote=false
+while getopts "hpv" OPTION; do
     case $OPTION in
         h)
             usage
@@ -21,12 +22,17 @@ while getopts "hp" OPTION; do
             printpath=true
             shift $(( OPTIND - 1))
             ;;
+        v)
+            viewnote=true
+            shift $(( OPTIND - 1))
     esac
 done
 
 labnotebook=`myscriptconf get labnotebook location`
 defaultproject=`myscriptconf get daily defaultproject`
 defaultext=`myscriptconf get daily defaultext`
+browser=`myscriptconf get daily browser`
+browserarg=`myscriptconf get daily browserarg`
 
 mostrecent=`cat $labnotebook/.mostrecent | awk -F '-' '{ print $1 "/" $2 }'`/`cat $labnotebook/.mostrecent`
 mostrecent=$labnotebook/dailies/${mostrecent}.${defaultext}
@@ -60,6 +66,11 @@ if [ $printpath = true ]; then
     else
         echo "No notes for $trgdate!"
     fi
+    exit
+fi
+
+if [ $viewnote = true ]; then
+    "$browser" "${browserarg}=file://${fpath}"
     exit
 fi
 
