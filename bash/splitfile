@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+
+function usage {
+cat << EOF
+Splits a single large file into several individual files.
+
+Usage: `basename $0` FILE [OPTIONS]
+
+Options:
+    -l  the number of lines to include in each file (default 100k)
+    -d  the directory to write files to (default current directory)
+EOF
+}
+
+function progress {
+echo -en "\rCreated $1 of $2 split files"
+}
+
+file=$1
+OPTIND=$(( OPTIND + 1 ))
+
+if [ -z $file ]; then
+    usage
+    exit
+fi
+
+lines=100000
+destdir=.
+while getopts "l:d:" OPTION; do
+    case $OPTION in
+        l)
+            lines=$OPTARG
+            ;;
+        d)
+            destdir=$OPTARG
+            ;;
+    esac
+done
+
+totallines=$(wc -l $file | awk -F ' ' '{ print $1 }')
+cursplit=1
+totalsplits=$(( ( totallines / lines ) + 1 ))
+
+while [[ $(( cursplit * lines )) -le $totallines ]]; do
+    head -n $(( cursplit * lines )) $file | tail -n $lines > $destdir/${file}.${cursplit}
+    progress $cursplit $totalsplits
+    cursplit=$(( cursplit + 1 ))
+done
+tail -n $(( totallines - ( ( cursplit - 1 ) * lines ) )) $file > $destdir/${file}.${cursplit}
+progress $cursplit $totalsplits
+echo
+echo
+
+echo Finished!
