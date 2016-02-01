@@ -59,7 +59,10 @@ if [ -z $EDITOR ]; then
     exit
 fi
 
-fpath=$labnotebook/dailies/$folder/${trgdate}.${defaultext}
+fullfolder=$labnotebook/dailies/$folder
+fpath=$fullfolder/${trgdate}.${defaultext}
+
+## handle printing the path
 if [ $printpath = true ]; then
     if [ -e $fpath ]; then
         echo $fpath
@@ -69,9 +72,15 @@ if [ $printpath = true ]; then
     exit
 fi
 
+## handle viewing the note
 if [ $viewnote = true ]; then
     "$browser" "${browserarg}=file://${fpath}"
     exit
+fi
+
+## otherwise, first make sure the directory exists
+if [ ! -d $fullfolder ]; then
+    mkdir -p $fullfolder
 fi
 
 ## default content if starting new note for today
