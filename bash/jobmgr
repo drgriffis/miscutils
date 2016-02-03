@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+
+jobsfile=~/.myjobs
+sep="%"
+st_running="RUNNING"
+st_error="ERROR"
+st_done="DONE"
+
+function usage {
+cat << EOF
+Usage: `basename $0` MODE [OPTIONS] COMMAND
+
+    MODE     one of [start, list, done]
+    COMMAND  the command to pass to the configured manager
+
+Options:
+    
+    -J NAME       name of the job
+    -o OPTSTRING  options to pass to the configured manager
+    -h            show this help
+EOF
+}
+
+function getmaxid {
+    awk -F "${sep}" '
+        BEGIN { maxid = 0 }
+        { if ($1 > maxid) { maxid = $1 } }
+        END   { print maxid }
+    ' $jobsfile
+}
+
+function setstatus {
+    id=$1
+    status=$2
+    awk -F "${sep}" '
+        {
+            if ($1 == '$id') {
+                print $1 "'$sep'" $2 "'$sep'" "'$status'" "'$sep'" $4
+            } else {
+                print $0
+            }
+        }
+    ' $jobsfile > ${jobsfile}.tmp
+    mv ${jobsfile}.tmp $jobsfile
+}
+
+function listjobs {
+    awk -F "${sep}" '
+        BEGIN { print "JobID\tName\tStatus\tCommand" }
+        { print $1 "\t" $2 "\t" $3 "\t" $4 }
+    ' $jobsfile
+}
+
+function removejob {
+    awk -F "${sep}" '
+        { if ($1 != '$1') { print $0 } }
+    ' $jobsfile > ${jobsfile}.tmp
+    mv ${jobsfile}.tmp $jobsfile
+}
+
+mode=$1
+OPTIND=$(( OPTIND + 1 ))
+
+if [ "$mode" != "start" ] && [ "$mode" != "list" ] && [ "$mode" != "done" ]; then
+    usage
+    exit
+fi
+
+jobname=
+mgropts=
+while getopts "J:o:h" OPTION; do
+    case $OPTION in
+        J)
+            jobname=$OPTARG
+            ;;
+        o)
+            mgropts="$OPTARG"
+            ;;
+        h)
+            usage
+            exit
+            ;;
+    esac
+done
+shift $(( OPTIND - 1 ))
+cmd=$1
+
+manager=`myscriptconf get jobmgr manager`
+
+if [ "$mode" == "start" ]; then
+    id=$(getmaxid)
+    id=$(( id + 1 ))
+    echo "${id}${sep}${jobname}${sep}${st_running}${sep}${cmd}" >> "$jobsfile"
+    $manager $mgropts $cmd
+    if [ $? -eq 0 ]; then
+        setstatus $id $st_done
+    else
+        setstatus $id $st_error
+    fi
+
+elif [ "$mode" == "list" ]; then
+    listjobs
+
+elif [ "$mode" == "done" ]; then
+    for job in $(echo "$cmd" | tr "," "\n"); do
+        removejob $job
+    done
+fi
