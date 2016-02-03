@@ -42,11 +42,11 @@ cursplit=1
 totalsplits=$(( ( totallines / lines ) + 1 ))
 
 while [[ $(( cursplit * lines )) -le $totallines ]]; do
-    head -n $(( cursplit * lines )) $file | tail -n $lines > $destdir/${file}.${cursplit}
+    head -n $(( cursplit * lines )) $file | tail -n $lines > $destdir/`basename ${file}`.${cursplit}
     progress $cursplit $totalsplits
     cursplit=$(( cursplit + 1 ))
 done
-tail -n $(( totallines - ( ( cursplit - 1 ) * lines ) )) $file > $destdir/${file}.${cursplit}
+tail -n $(( totallines - ( ( cursplit - 1 ) * lines ) )) $file > $destdir/`basename ${file}`.${cursplit}
 progress $cursplit $totalsplits
 echo
 echo
