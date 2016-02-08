@@ -13,6 +13,8 @@ Options:
     -d DATE   start notes for a meeting on DATE (yyyy-mm-dd format)
     -p INDEX  show notes for prior meeting, INDEX steps back
     -P        show notes for most recent meeting (equivalent to -p 1)
+    -l        list all meetings
+    -L        list all preset values for WITH
 EOF
 }
 
@@ -33,16 +35,27 @@ function isdategreater {
     fi
 }
 
-OPTIND=$(( OPTIND + 1 ))
 listmeetings=false
+listwiths=false
 trgdate=
 index=
+
+# check for options in first argument
+getopts "hL" OPTION
+case $OPTION in
+    h)
+        usage
+        exit
+        ;;
+    L)
+        listwiths=true
+        ;;
+esac
+
+# otherwise, first argument will be $with; check for further options
+OPTIND=$(( OPTIND + 1 ))
 while getopts "hld:p:P" OPTION; do
     case $OPTION in
-        h)
-            usage
-            exit
-            ;;
         l)
             listmeetings=true;
             ;;
@@ -57,6 +70,19 @@ while getopts "hld:p:P" OPTION; do
             ;;
     esac
 done
+
+if [ $listwiths = true ]; then
+    myscriptconf get meetings fullwith \
+        | sed -e 's/;/|/g' \
+        | awk -F '|' '{
+              for (i=1; i<NF; i++) {
+                  if ((i%2)==1) {
+                    print $(i) "\t" $(i+1)
+                  }
+              }
+          }'
+    exit
+fi
 
 with=$1
 if [ -z $with ]; then
