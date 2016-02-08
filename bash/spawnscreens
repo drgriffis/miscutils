@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+function usage {
+cat << EOF
+Usage: `basename $0` MAXN COMMAND SCRN_NAME
+
+    MAXN       number of child processes to spawn
+    COMMAND    command to execute in screen sessions (N will be replaced with counter)
+    SCRN_NAME  name for screen sessions (suffixed with counter)
+EOF
+}
+
+max=$1
+cmd=$2
+name=$3
+
+if [ -z "$max" ] || [ -z "$cmd" ] || [ -z "$name" ]; then
+    usage
+    exit
+fi
+
+for i in $(seq 1 $max); do
+    thisname=${name}${i}
+    screen -dmLS $thisname
+    screen -r $thisname
+    screen -S $thisname -X stuff "`echo ${cmd} | sed -e 's/N/'$i'/g'` `echo -ne '\015'`"
+done
