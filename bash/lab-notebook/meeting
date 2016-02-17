@@ -13,6 +13,8 @@ Options:
     -d DATE   start notes for a meeting on DATE (yyyy-mm-dd format)
     -p INDEX  show notes for prior meeting, INDEX steps back
     -P        show notes for most recent meeting (equivalent to -p 1)
+    -l        list all meetings
+    -L        list all preset values for WITH
 EOF
 }
 
@@ -21,17 +23,39 @@ function getmeetings {
     | grep "_${with}.${defaultext}" \
     | sort -r -n
 }
+function getmostrecent {
+    getmeetings | head -n 1
+}
+function isdategreater {
+    maxdate=$(echo -e "$1\n$2" | sort -r -n | head -n 1)
+    if [ "$maxdate" = $1 ]; then
+        echo "true"
+    else
+        echo "false"
+    fi
+}
 
-OPTIND=$(( OPTIND + 1 ))
 listmeetings=false
+listwiths=false
 trgdate=
 index=
+
+# check for options in first argument
+getopts "hL" OPTION
+case $OPTION in
+    h)
+        usage
+        exit
+        ;;
+    L)
+        listwiths=true
+        ;;
+esac
+
+# otherwise, first argument will be $with; check for further options
+OPTIND=$(( OPTIND + 1 ))
 while getopts "hld:p:P" OPTION; do
     case $OPTION in
-        h)
-            usage
-            exit
-            ;;
         l)
             listmeetings=true;
             ;;
@@ -46,6 +70,19 @@ while getopts "hld:p:P" OPTION; do
             ;;
     esac
 done
+
+if [ $listwiths = true ]; then
+    myscriptconf get meetings fullwith \
+        | sed -e 's/;/|/g' \
+        | awk -F '|' '{
+              for (i=1; i<NF; i++) {
+                  if ((i%2)==1) {
+                    print $(i) "\t" $(i+1)
+                  }
+              }
+          }'
+    exit
+fi
 
 with=$1
 if [ -z $with ]; then
@@ -73,13 +110,33 @@ if [ -z $EDITOR ]; then
     exit
 fi
 
+currentdate=`date "+%Y-%m-%d"`
 labnotebook=`myscriptconf get labnotebook location`
 defaultext=`myscriptconf get meetings defaultext`
 
+mostrecent=$(getmostrecent | awk -F '_' '{ print $1 }')
+upcoming=false
+if [[ "$(isdategreater $currentdate $mostrecent)" = "false" ]]; then
+    upcoming=true
+fi
+
 if [ $listmeetings = true ]; then
-    meetings=$(getmeetings \
-        | sed -e "s/_${with}\.${defaultext}//"
-    )
+    if [ $upcoming = true ]; then
+        echo "Upcoming meeting with ${fullwith}":
+        echo $mostrecent
+        echo
+    fi
+    echo "Past meetings with ${fullwith}:"
+    if [ $upcoming = true ]; then
+        meetings=$(getmeetings \
+            | tail -n +2 \
+            | sed -e "s/_${with}\.${defaultext}//"
+        )
+    else
+        meetings=$(getmeetings \
+            | sed -e "s/_${with}\.${defaultext}//"
+        )
+    fi
     for m in $meetings; do
         i=$(( i + 1 ))
         echo $i - $m
@@ -87,15 +144,18 @@ if [ $listmeetings = true ]; then
     exit
 fi
 
-currentdate=`date "+%Y-%m-%d"`
 if [ -z $trgdate ]; then
     trgdate=$currentdate
 fi
 
 if [ -z $index ]; then
-    currentdate=`date "+%Y-%m-%d"`
-    trgdir=`date "+%Y/%m"`
-    trgf=$trgdir/${trgdate}_${with}.${defaultext}
+    if [ $upcoming = true ]; then
+        trgdir=$(echo $mostrecent | awk -F '-' '{ print $1 "/" $2 }')
+        trgf=$trgdir/${mostrecent}_${with}.${defaultext}
+    else
+        trgdir=`date "+%Y/%m"`
+        trgf=$trgdir/${trgdate}_${with}.${defaultext}
+    fi
 else
     meetings=$(getmeetings)
     count=0; for m in $meetings; do count=$(( count + 1 )); done
@@ -117,6 +177,11 @@ else
     trgf=$trgdir/$trgmeeting
 fi
 trgf=$labnotebook/meetings/$trgf
+
+## make sure the containing directory exists
+if [ ! -d `dirname "$trgf"` ]; then
+    mkdir -p `dirname "$trgf"`
+fi
 
 ## if new meeting, create default content
 if [ ! -e "$trgf" ] && [ -z "$index" ]; then
