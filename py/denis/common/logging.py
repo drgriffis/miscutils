@@ -88,7 +88,7 @@ class log:
             if not timer: timer = log.timer
             timer.stop()
             elpsed = timer.elapsed()
-            log.writeln(str.format(frmt, log.timer.elapsed()))
+            log.writeln(str.format(frmt, elpsed))
         else:
             raise Exception('No timer to stop!')
 
