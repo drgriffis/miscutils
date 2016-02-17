@@ -77,9 +77,10 @@ class log:
                 raise Exception('Tracker is complete!')
 
     @staticmethod
-    def startTimer(message=None):
+    def startTimer(message=None, newline=True):
         if message:
-            log.writeln(message)
+            if newline: log.writeln(message)
+            else: log.write(message)
         log.timer = Timer()
         log.timer.start()
         return log.timer
