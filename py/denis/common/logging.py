@@ -24,26 +24,28 @@ class log:
     def getstream():
         return log.logfile
     @staticmethod
-    def write(message):
+    def write(message, stdoutOnly=False):
+        if stdoutOnly and log.getstream() != sys.stdout:
+            return
         if not log.stopped:
             log.getstream().write(message)
             if log.autoflush: log.getstream().flush()
         else:
             raise Exception("Log has stopped!")
     @staticmethod
-    def writeln(message=''):
-        log.write(message); log.write('\n')
+    def writeln(message='', stdoutOnly=False):
+        log.write(message, stdoutOnly=stdoutOnly); log.write('\n', stdoutOnly=stdoutOnly)
     @staticmethod
-    def progress(current, total, numDots=0):
+    def progress(current, total, numDots=0, stdoutOnly=False):
         line = str.format('\r{0}{1}%', numDots*'.', int((float(current)/total)*100))
-        log.write(line)
+        log.write(line, stdoutOnly=stdoutOnly)
     @staticmethod
     def yesno(bln):
         if bln: return 'Yes'
         else: return 'No'
 
     @staticmethod
-    def track(total=None, msgFormatter='{0}%', writeInterval=1):
+    def track(total=None, msgFormatter='{0}%', writeInterval=1, stdoutOnly=True):
         # if msgFormatter was given as a string, convert it to a lambda function
         if type(msgFormatter) == type('str'):
             msgFormat = msgFormatter
@@ -55,11 +57,11 @@ class log:
         # set up the onIncrement lambda for current/total or current only
         if total:
             onIncrement = lambda current, total: log.write(
-                str.format('\r{0}', msgFormatter(current, total))
+                str.format('\r{0}', msgFormatter(current, total)), stdoutOnly=stdoutOnly
             )
         else:
             onIncrement = lambda current: log.write(
-                str.format('\r{0}', msgFormatter(current))
+                str.format('\r{0}', msgFormatter(current)), stdoutOnly=stdoutOnly
             )
 
         log.tracker = ProgressTracker(total, onIncrement=onIncrement, writeInterval=writeInterval)
