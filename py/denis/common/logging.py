@@ -15,6 +15,8 @@ class log:
         if message and type(message) == type(lambda x: x):
             if args: message(args)
             else: message()
+        elif message and type(message) == type('str'):
+            log.writeln(message)
     @staticmethod
     def stop():
         if log.logfile != sys.stdout: 
