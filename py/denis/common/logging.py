@@ -45,23 +45,23 @@ class log:
         else: return 'No'
 
     @staticmethod
-    def track(total=None, msgFormatter='{0}%', writeInterval=1, stdoutOnly=True):
-        # if msgFormatter was given as a string, convert it to a lambda function
-        if type(msgFormatter) == type('str'):
-            msgFormat = msgFormatter
+    def track(total=None, message='{0}%', writeInterval=1, stdoutOnly=True):
+        # if message was given as a string, convert it to a lambda function
+        if type(message) == type('str'):
+            msgFormat = message 
             # default to percentage with a total
-            if total: msgFormatter = lambda current, total: str.format(msgFormat, int((float(current)/total)*100))
+            if total: message = lambda current, total: str.format(msgFormat, int((float(current)/total)*100))
             # default to printing current with no total
-            else: msgFormatter = lambda current: str.format(msgFormat, current)
+            else: message = lambda current: str.format(msgFormat, current)
 
         # set up the onIncrement lambda for current/total or current only
         if total:
             onIncrement = lambda current, total: log.write(
-                str.format('\r{0}', msgFormatter(current, total)), stdoutOnly=stdoutOnly
+                str.format('\r{0}', message(current, total)), stdoutOnly=stdoutOnly
             )
         else:
             onIncrement = lambda current: log.write(
-                str.format('\r{0}', msgFormatter(current)), stdoutOnly=stdoutOnly
+                str.format('\r{0}', message(current)), stdoutOnly=stdoutOnly
             )
 
         log.tracker = ProgressTracker(total, onIncrement=onIncrement, writeInterval=writeInterval)
@@ -83,12 +83,12 @@ class log:
         return log.timer
 
     @staticmethod
-    def stopTimer(timer=None, frmt='>>Completed in {0} sec.\n'):
+    def stopTimer(timer=None, message='>>Completed in {0} sec.\n'):
         if timer or log.timer:
             if not timer: timer = log.timer
             timer.stop()
             elpsed = timer.elapsed()
-            log.writeln(str.format(frmt, elpsed))
+            log.writeln(str.format(message, elpsed))
         else:
             raise Exception('No timer to stop!')
 
