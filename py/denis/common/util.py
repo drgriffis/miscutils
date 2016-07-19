@@ -3,6 +3,7 @@ Utility functions for use in any situation.
 
 aka All the stuff I'm tired of copy-pasting :P
 '''
+import random
 import codecs
 from denis.common.replacer import replacer
 
@@ -73,3 +74,24 @@ def reverseDict(dct):
 def replace(text, repls):
     pattern = replacer.prepare(repls)
     return replacer.apply(pattern, text)
+
+def parallelExecute(processes):
+    '''Takes instances of multiprocessing.Process, starts them all executing,
+    and returns when they finish.
+    '''
+    # start all the threads running...
+    for p in processes:
+        p.start()
+    # ...and wait for all of them to finish
+    for p in processes:
+        p.join()
+
+def coinflip():
+    '''Return True with probability 1/2
+    '''
+    return rollDie(n=2)
+
+def rollDie(n):
+    '''Roll an N-sided die and return True with probability 1/N
+    '''
+    return random.choice(range(n)) == 0
