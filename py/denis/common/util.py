@@ -5,6 +5,7 @@ aka All the stuff I'm tired of copy-pasting :P
 '''
 import random
 import codecs
+import re
 from denis.common.replacer import replacer
 
 def laxIncrement(dct, key, by=1):
@@ -95,3 +96,20 @@ def rollDie(n):
     '''Roll an N-sided die and return True with probability 1/N
     '''
     return random.choice(range(n)) == 0
+
+def matchesRegex(regex, string):
+    '''Returns Boolean indicating if the input regex found a positive (non-zero)
+    match in the input string.
+    '''
+    mtch = re.match(regex, string)
+    return mtch != None and mtch.span() != (0,0)
+
+def flatten(arr):
+    '''Given an array of N-dimensional objects (N can vary), returns 1-dimensional
+    list of the contained objects.
+    '''
+    results = []
+    for el in arr:
+        if type(el) == list or type(el) == tuple: results.extend(flatten(el))
+        else: results.append(el)
+    return results
