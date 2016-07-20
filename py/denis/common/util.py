@@ -47,6 +47,11 @@ def writeCSV(fname, csv, sep=',', encoding='ascii', useUnicode=False):
         writeas = str
     dump(fname, toCSV(csv, sep, writeas=writeas), encoding=encoding)
 
+def writeList(fname, data, sep=',', encoding='ascii'):
+    '''Write a list of objects to a file, one per line
+    '''
+    dump(fname, '\n'.join([str(s) for s in data]), encoding=encoding)
+
 def toCSV(data, sep=',', writeas=str):
     return '\n'.join([sep.join([writeas(c) for c in row]) for row in data])
 
