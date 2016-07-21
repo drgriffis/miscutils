@@ -81,6 +81,27 @@ def replace(text, repls):
     pattern = replacer.prepare(repls)
     return replacer.apply(pattern, text)
 
+def prepareForParallel(data, threads):
+    '''Chunks list of data into disjoint subsets for each thread
+    to process.
+
+    Parameters:
+        data    :: the list of data to split among threads
+        threads :: the number of threads to split for
+    '''
+    perthread = int(len(data) / threads)
+    threadchunks = []
+    for i in range(threads):
+        startix, endix = (i*perthread), ((i+1)*perthread)
+        # first N-1 threads handle equally-sized chunks of data
+        if i < threads-1:
+            endix = (i+1)*perthread
+            threadchunks.append((startix, data[startix:endix]))
+        # last thread handles remainder of data
+        else:
+            threadchunks.append((startix, data[startix:]))
+    return threadchunks
+
 def parallelExecute(processes):
     '''Takes instances of multiprocessing.Process, starts them all executing,
     and returns when they finish.
