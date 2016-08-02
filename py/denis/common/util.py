@@ -26,14 +26,14 @@ def dump(fname, contents, encoding='ascii'):
     f.write(contents)
     f.close()
 
-def readlines(fname):
-    f = open(fname, 'r')
+def readlines(fname, encoding='ascii'):
+    f = codecs.open(fname, 'r', encoding)
     lns = f.readlines()
     f.close()
     return lns
 
-def readCSV(fname, sep=',', readas=str):
-    lns = readlines(fname)
+def readCSV(fname, sep=',', readas=str, encoding='ascii'):
+    lns = readlines(fname, encoding=encoding)
     return [[readas(c.strip()) for c in row.split(sep)] for row in lns]
 
 def writeCSV(fname, csv, sep=',', encoding='ascii', useUnicode=False):
@@ -47,10 +47,16 @@ def writeCSV(fname, csv, sep=',', encoding='ascii', useUnicode=False):
         writeas = str
     dump(fname, toCSV(csv, sep, writeas=writeas), encoding=encoding)
 
-def writeList(fname, data, sep=',', encoding='ascii'):
+def writeList(fname, data, encoding='ascii'):
     '''Write a list of objects to a file, one per line
     '''
     dump(fname, '\n'.join([str(s) for s in data]), encoding=encoding)
+
+def readList(fname, encoding='ascii', readas=str):
+    '''Read a list of objects from a file, one per line
+    '''
+    line_arrays = readCSV(fname, encoding=encoding, readas=readas)
+    return flatten(line_arrays)
 
 def toCSV(data, sep=',', writeas=str):
     return '\n'.join([sep.join([writeas(c) for c in row]) for row in data])
