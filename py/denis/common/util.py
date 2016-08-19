@@ -5,6 +5,7 @@ aka All the stuff I'm tired of copy-pasting :P
 '''
 import random
 import codecs
+import re
 from denis.common.replacer import replacer
 
 def laxIncrement(dct, key, by=1):
@@ -25,14 +26,14 @@ def dump(fname, contents, encoding='ascii'):
     f.write(contents)
     f.close()
 
-def readlines(fname):
-    f = open(fname, 'r')
+def readlines(fname, encoding='ascii'):
+    f = codecs.open(fname, 'r', encoding)
     lns = f.readlines()
     f.close()
     return lns
 
-def readCSV(fname, sep=',', readas=str):
-    lns = readlines(fname)
+def readCSV(fname, sep=',', readas=str, encoding='ascii'):
+    lns = readlines(fname, encoding=encoding)
     return [[readas(c.strip()) for c in row.split(sep)] for row in lns]
 
 def writeCSV(fname, csv, sep=',', encoding='ascii', useUnicode=False):
@@ -45,6 +46,17 @@ def writeCSV(fname, csv, sep=',', encoding='ascii', useUnicode=False):
     else:
         writeas = str
     dump(fname, toCSV(csv, sep, writeas=writeas), encoding=encoding)
+
+def writeList(fname, data, encoding='ascii'):
+    '''Write a list of objects to a file, one per line
+    '''
+    dump(fname, '\n'.join([str(s) for s in data]), encoding=encoding)
+
+def readList(fname, encoding='ascii', readas=str):
+    '''Read a list of objects from a file, one per line
+    '''
+    line_arrays = readCSV(fname, encoding=encoding, readas=readas)
+    return flatten(line_arrays)
 
 def toCSV(data, sep=',', writeas=str):
     return '\n'.join([sep.join([writeas(c) for c in row]) for row in data])
@@ -75,6 +87,27 @@ def replace(text, repls):
     pattern = replacer.prepare(repls)
     return replacer.apply(pattern, text)
 
+def prepareForParallel(data, threads):
+    '''Chunks list of data into disjoint subsets for each thread
+    to process.
+
+    Parameters:
+        data    :: the list of data to split among threads
+        threads :: the number of threads to split for
+    '''
+    perthread = int(len(data) / threads)
+    threadchunks = []
+    for i in range(threads):
+        startix, endix = (i*perthread), ((i+1)*perthread)
+        # first N-1 threads handle equally-sized chunks of data
+        if i < threads-1:
+            endix = (i+1)*perthread
+            threadchunks.append((startix, data[startix:endix]))
+        # last thread handles remainder of data
+        else:
+            threadchunks.append((startix, data[startix:]))
+    return threadchunks
+
 def parallelExecute(processes):
     '''Takes instances of multiprocessing.Process, starts them all executing,
     and returns when they finish.
@@ -95,3 +128,20 @@ def rollDie(n):
     '''Roll an N-sided die and return True with probability 1/N
     '''
     return random.choice(range(n)) == 0
+
+def matchesRegex(regex, string):
+    '''Returns Boolean indicating if the input regex found a positive (non-zero)
+    match in the input string.
+    '''
+    mtch = re.match(regex, string)
+    return mtch != None and mtch.span() != (0,0)
+
+def flatten(arr):
+    '''Given an array of N-dimensional objects (N can vary), returns 1-dimensional
+    list of the contained objects.
+    '''
+    results = []
+    for el in arr:
+        if type(el) == list or type(el) == tuple: results.extend(flatten(el))
+        else: results.append(el)
+    return results
