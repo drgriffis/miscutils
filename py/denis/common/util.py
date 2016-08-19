@@ -145,3 +145,24 @@ def flatten(arr):
         if type(el) == list or type(el) == tuple: results.extend(flatten(el))
         else: results.append(el)
     return results
+
+def XMLAttribute(attr_name, xml):
+    '''Given an XML string and an attribute name, return the value of that attribute
+    '''
+    match = re.findall('%s=".+"' % attr_name, xml)
+    if len(match) != 1:
+        raise KeyError('Attribute name "%s" not found/not unique' % attr_name)
+    match = match[0]
+
+    opn = match.index('"')
+    cls = match[opn+1:].index('"')
+    return match[opn+1:opn+cls+1]
+
+def XMLValue(xml):
+    '''Given an XML string, returns the value of the tag (if present)
+    '''
+    match = re.findall(r'>.+</', xml)
+    if len(match) != 1:
+        return None
+    else:
+        return match[0][1:-2]
