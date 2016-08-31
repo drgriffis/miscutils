@@ -47,6 +47,12 @@ class log:
         else: return 'No'
 
     @staticmethod
+    def redirect_stderr():
+        '''Redirect output from STDERR to the log
+        '''
+        sys.stderr = log.getstream()
+
+    @staticmethod
     def track(total=None, message='{0}%', writeInterval=1, stdoutOnly=True):
         # if message was given as a string, convert it to a lambda function
         if type(message) == type('str'):
