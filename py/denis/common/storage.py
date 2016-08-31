@@ -12,3 +12,7 @@ class FreqPair:
     def __init__(self, item, freq=0):
         self.item = item
         self.freq = freq
+
+    def increment(self):
+        '''Increment frequency counter'''
+        self.freq += 1
