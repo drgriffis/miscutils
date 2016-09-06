@@ -36,10 +36,15 @@ def readCSV(fname, sep=',', readas=str, encoding='ascii'):
     lns = readlines(fname, encoding=encoding)
     return [[readas(c.strip()) for c in row.split(sep)] for row in lns]
 
-def writeCSV(fname, csv, sep=',', encoding='ascii', useUnicode=False):
+def writeCSV(fname, csv, sep=',', encoding='ascii', useUnicode=False, headers=None):
     '''
     If useUnicode is True and encoding is unspecified, will default to UTF-8 encoding.
     '''
+    # add the headers if specified
+    if type(headers) in (list, tuple):
+        new_csv = [headers]
+        new_csv.extend(csv)
+        csv = new_csv
     if useUnicode:
         if encoding == 'ascii': encoding = 'utf-8'
         writeas = unicode
