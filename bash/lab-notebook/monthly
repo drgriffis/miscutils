@@ -1,0 +1,152 @@
+#!/bin/bash
+
+function usage {
+cat << EOF
+Monthly lab notebook review entries.
+
+Usage: `basename $0` [MONTH]
+
+    MONTH  month to see review note for; defaults to current month
+EOF
+}
+
+printpath=false
+viewnote=false
+while getopts "hpvl" OPTION; do
+    case $OPTION in
+        h)
+            usage
+            exit
+            ;;
+        p)
+            printpath=true
+            shift $(( OPTIND - 1))
+            ;;
+        v)
+            viewnote=true
+            shift $(( OPTIND - 1))
+            ;;
+    esac
+done
+
+labnotebook=`myscriptconf get labnotebook location`
+defaultext=`myscriptconf get daily defaultext`
+browser=`myscriptconf get daily browser`
+browserarg=`myscriptconf get daily browserarg`
+monthlyname=`myscriptconf get monthly filename`
+
+currentmnth=`date "+%Y-%m"`
+trgmnth=$1
+isthismnth=false
+if [ -z $trgmnth ]; then
+    trgmnth=$currentmnth
+    istoday=true
+else
+    # fill in current year/month if necessary
+    nf=`echo $trgmnth | awk -F "-" '{ print NF }'`
+    if [[ $nf = 1 ]]; then
+        # add leading 0 if necessary
+        if [[ ${#trgmnth} = 1 ]]; then
+            trgmnth="0${trgmnth}"
+        fi
+        trgmnth=`date "+%Y"`-${trgmnth}
+    fi
+fi
+folder=`echo $trgmnth | awk -F "-" '{ print $1 "/" $2 }'`
+
+if [ -z $EDITOR ]; then
+    echo "Please set a default editor in the EDITOR environment variable!"
+    exit
+fi
+
+fullfolder=$labnotebook/dailies/$folder
+fpath=$fullfolder/`echo $trgmnth | awk -F "-" '{ print $2 }'`-${monthlyname}.${defaultext}
+
+## handle printing the path
+if [ $printpath = true ]; then
+    if [ -e $fpath ]; then
+        echo $fpath
+    else
+        echo "No monthly review for $trgmnth!"
+    fi
+    exit
+fi
+
+## handle viewing the note
+if [ $viewnote = true ]; then
+    "$browser" "${browserarg}=file://${fpath}"
+    exit
+fi
+
+## otherwise, first make sure the directory exists
+if [ ! -d $fullfolder ]; then
+    mkdir -p $fullfolder
+fi
+
+## if a new review for a different month, check if want to create file
+if [ ! -e $fpath ] && [ $isthismnth = false ]; then
+    echo "No monthly review for $trgmnth!"
+    while true; do
+    read -p "Would you like to create one? [y/n] " yn
+        case $yn in
+            [Yy]* ) break;;
+            [Nn]* ) exit;;
+            * ) echo "y or n";;
+        esac
+    done
+fi
+
+## default content if starting new monthly review
+if [ ! -e $fpath ]; then
+    echo "Monthly review for $trgmnth" >> $fpath
+    echo >> $fpath
+
+    echo "### Completed TODOs ###" >> $fpath
+    # port over completed todos from the month
+    for dailyf in $fullfolder/${trgmnth}-*.${defaultext}; do
+        awk -F "###" '{ 
+                if (NF > 1) {    # "###" was present, section header
+                    curproj=$2 
+                } else if (match(curproj, /TODOs/)) {   # in the TODOs section
+                    print $0 
+                } 
+            }' $dailyf              `#pull all lines in the TODOs section` \
+            | grep '^ *- \[[xX~-]\]'  `#keep only those with checked checkboxes` \
+            >> $fpath
+    done
+
+    # get the set of projects notes were taken for for the month
+    mkdir -p $fullfolder/.projnames
+    for dailyf in $fullfolder/${trgmnth}-*.${defaultext}; do
+        for prjnm in $(
+        awk -F "###" '{ 
+                if (NF > 1) {    # "###" was present, section header
+                    if (match($2, /Project/)) {
+                        print $2
+                    }
+                } 
+            }' $dailyf                   `#pull all project headers` \
+            | awk -F ':' '{
+                print $2
+            }'                           `#get the project name` \
+            | sed -e 's/^ *//g'          `#trim whitespace` \
+        ); do
+            touch $fullfolder/.projnames/$prjnm
+        done
+    done
+
+    # start sections for each project
+    for prjnm in $(ls $fullfolder/.projnames/*); do
+        echo >> $fpath
+        echo >> $fpath
+        echo "### Project: $(basename $prjnm) ###" >> $fpath
+        echo >> $fpath
+        echo "  - " >> $fpath
+    done
+
+    rm $fullfolder/.projnames/*
+    rmdir $fullfolder/.projnames
+fi
+
+## drop into editing
+$EDITOR -c "call ToggleBufferGator()" $fpath $fullfolder/${trgmnth}-*.${defaultext}
