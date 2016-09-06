@@ -11,10 +11,11 @@ Usage: `basename $0` WITH [OPTIONS]
 Options:
     -h        show this help and exit
     -d DATE   start notes for a meeting on DATE (yyyy-mm-dd format)
-    -p INDEX  show notes for prior meeting, INDEX steps back
-    -P        show notes for most recent meeting (equivalent to -p 1)
+    -i INDEX  show notes for prior meeting, INDEX steps back
+    -P        show notes for most recent meeting (equivalent to -i 1)
     -l        list all meetings
     -L        list all preset values for WITH
+    -p        print path to meeting notes file
 EOF
 }
 
@@ -37,15 +38,19 @@ function isdategreater {
 
 listmeetings=false
 listwiths=false
+printpath=false
 trgdate=
 index=
 
 # check for options in first argument
-getopts "hL" OPTION
+getopts "hLl" OPTION
 case $OPTION in
     h)
         usage
         exit
+        ;;
+    l)
+        listwiths=true
         ;;
     L)
         listwiths=true
@@ -54,7 +59,7 @@ esac
 
 # otherwise, first argument will be $with; check for further options
 OPTIND=$(( OPTIND + 1 ))
-while getopts "hld:p:P" OPTION; do
+while getopts "hld:i:Pp" OPTION; do
     case $OPTION in
         l)
             listmeetings=true;
@@ -62,11 +67,14 @@ while getopts "hld:p:P" OPTION; do
         d)
             trgdate=$OPTARG
             ;;
-        p)
+        i)
             index=$OPTARG
             ;;
         P)
             index=1
+            ;;
+        p)
+            printpath=true;
             ;;
     esac
 done
@@ -89,6 +97,11 @@ if [ -z $with ]; then
     usage
     exit
 else
+    # correct for "elf"
+    if [ "$with" = "elf" ]; then
+        echo ">>> Correcting elf --> efl <<<"
+        with=efl
+    fi
     # get full name of meeting person
     fullwith="`myscriptconf get meetings fullwith \
         | sed -e 's/;/|/g' \
@@ -159,10 +172,11 @@ if [ -z $index ]; then
 else
     meetings=$(getmeetings)
     count=0; for m in $meetings; do count=$(( count + 1 )); done
+    echo $count $index
     if [[ $count = 0 ]]; then
         echo "No prior meetings with $fullwith!"
         exit
-    elif [[ $count < $index ]]; then
+    elif [[ $count -lt $index ]]; then
         echo "You don't have enough of a history with $fullwith to go $index meetings back."
         exit
     fi
@@ -177,6 +191,12 @@ else
     trgf=$trgdir/$trgmeeting
 fi
 trgf=$labnotebook/meetings/$trgf
+
+## print path if desired
+if [ $printpath = true ]; then
+    echo $trgf
+    exit
+fi
 
 ## make sure the containing directory exists
 if [ ! -d `dirname "$trgf"` ]; then
