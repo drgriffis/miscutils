@@ -12,7 +12,8 @@ EOF
 
 printpath=false
 viewnote=false
-while getopts "hpv" OPTION; do
+listnotes=false
+while getopts "hpvl" OPTION; do
     case $OPTION in
         h)
             usage
@@ -25,6 +26,11 @@ while getopts "hpv" OPTION; do
         v)
             viewnote=true
             shift $(( OPTIND - 1))
+            ;;
+        l)
+            listnotes=true
+            shift $(( OPTIND - 1))
+            ;;
     esac
 done
 
@@ -47,12 +53,26 @@ else
     # fill in current year/month if necessary
     nf=`echo $trgdate | awk -F "-" '{ print NF }'`
     if [[ $nf = 1 ]]; then
+        # add leading 0 if necessary
+        if [[ ${#trgdate} = 1 ]]; then
+            trgdate="0${trgdate}"
+        fi
         trgdate=`date "+%Y-%m"`-${trgdate}
     elif [[ $nf = 2 ]]; then
+        # add leading 0 if necessary
+        if [[ ${#trgdate} = 4 ]]; then
+            trgdate="0${trgdate}"
+        fi
         trgdate=`date "+%Y"`-${trgdate}
     fi
 fi
 folder=`echo $trgdate | awk -F "-" '{ print $1 "/" $2 }'`
+
+## handle listing notes for current month
+if [ $listnotes = true ]; then
+    ls $labnotebook/dailies/$folder
+    exit
+fi
 
 if [ -z $EDITOR ]; then
     echo "Please set a default editor in the EDITOR environment variable!"
