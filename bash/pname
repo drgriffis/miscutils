@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+clipboard=`myscriptconf get pname clipboard`
+
+if [ -z "$clipboard" ]; then
+    echo "ERROR - Please set a clipboard program in the script configuration file."
+    exit
+fi
+
+if [ -z "$1" ]; then
+    echo "Please input a paper name!"
+elif [ ! -z "$2" ]; then
+    echo "Please enclose the paper name in quotes!"
+else
+    _pname "$1" | $clipboard
+    echo "Paper name on clipboard."
+fi
