@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+toprintdir=`myscriptconf get printing toprintdir`
+
+if [ -z $1 ]; then
+    echo "Files queued for (eventual) printing:"
+    ls $toprintdir
+else
+    cp $1 $toprintdir
+fi
