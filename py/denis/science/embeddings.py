@@ -88,3 +88,24 @@ def _writeBin(wordmap, fname):
         wordmap.get(word).tofile(outf)
         outf.write(b'\n')
     outf.close()
+
+def closestNeighbor(query, embedding_array, normed=False):
+    '''Gets the index of the closest neighbor of embedding_array
+    to the query point.  Distance metric is cosine.
+
+    SLOW. DO NOT USE THIS FOR RAPID COMPUTATION.
+    '''
+    embedding_array = numpy.array(embedding_array)
+    if not normed:
+        embedding_array = numpy.array([
+            (embedding_array[i] / numpy.linalg.norm(embedding_array[i]))
+                for i in range(embedding_array.shape[0])
+        ])
+
+    ## assuming embeddings are unit-normed by this point;
+    ## norm(query) is a constant factor, so we can ignore it
+    dists = numpy.array([
+        numpy.dot(query, embedding_array[i])
+            for i in range(embedding_array.shape[0])
+    ])
+    return numpy.argmax(dists)
