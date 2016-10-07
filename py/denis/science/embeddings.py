@@ -14,7 +14,7 @@ class Mode:
     Text = 'txt'
     Binary = 'bin'
 
-def read(fname, mode):
+def read(fname, mode=Mode.Binary):
     '''Returns array of words and word embedding matrix
     '''
     (words, vectors) = _read(fname, mode)
