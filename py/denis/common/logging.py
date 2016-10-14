@@ -58,27 +58,27 @@ class log:
         if type(message) == type('str'):
             msgFormat = message 
             # default to percentage with a total
-            if total: message = lambda current, total: str.format(msgFormat, int((float(current)/total)*100))
+            if total: message = lambda current, total, args: str.format(msgFormat, int((float(current)/total)*100), *args)
             # default to printing current with no total
-            else: message = lambda current: str.format(msgFormat, current)
+            else: message = lambda current, args: str.format(msgFormat, current, *args)
 
         # set up the onIncrement lambda for current/total or current only
         if total:
-            onIncrement = lambda current, total: log.write(
-                str.format('\r{0}', message(current, total)), stdoutOnly=stdoutOnly
+            onIncrement = lambda current, total, args: log.write(
+                str.format('\r{0}', message(current, total, args)), stdoutOnly=stdoutOnly
             )
         else:
-            onIncrement = lambda current: log.write(
-                str.format('\r{0}', message(current)), stdoutOnly=stdoutOnly
+            onIncrement = lambda current, args: log.write(
+                str.format('\r{0}', message(current, args)), stdoutOnly=stdoutOnly
             )
 
         log.tracker = ProgressTracker(total, onIncrement=onIncrement, writeInterval=writeInterval)
 
     @staticmethod
-    def tick():
+    def tick(*args):
         if log.tracker != None:
             if not log.tracker.total or log.tracker.current < log.tracker.total:
-                log.tracker.increment()
+                log.tracker.increment(*args)
             else:
                 raise Exception('Tracker is complete!')
 
@@ -114,15 +114,15 @@ class ProgressTracker:
         self.onIncrement = onIncrement
         self.writeInterval = writeInterval
 
-    def increment(self):
+    def increment(self, *args):
         self.current += 1
         self.sinceLastWrite += 1
         if self.sinceLastWrite >= self.writeInterval:
             self.sinceLastWrite = 0
             if self.onIncrement:
-                # only call 2-arg onIncrement if we have a total we're counting towards
-                if self.total: self.onIncrement(self.current, self.total)
-                else: self.onIncrement(self.current)
+                # only call 3-arg onIncrement if we have a total we're counting towards
+                if self.total: self.onIncrement(self.current, self.total, args)
+                else: self.onIncrement(self.current, args)
 
     def reset(self):
         self.current = 0
