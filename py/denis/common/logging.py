@@ -83,6 +83,11 @@ class log:
                 raise Exception('Tracker is complete!')
 
     @staticmethod
+    def reset():
+        if log.tracker != None:
+            log.tracker.reset()
+
+    @staticmethod
     def startTimer(message=None, newline=True):
         if message:
             if newline: log.writeln(message)
@@ -118,6 +123,10 @@ class ProgressTracker:
                 # only call 2-arg onIncrement if we have a total we're counting towards
                 if self.total: self.onIncrement(self.current, self.total)
                 else: self.onIncrement(self.current)
+
+    def reset(self):
+        self.current = 0
+        self.sinceLastWrite = 0
 
 class Timer:
     def __init__(self):
