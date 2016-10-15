@@ -2,6 +2,7 @@
 Common text preprocessing methods
 '''
 
+import re
 import sys
 from denis.common import util
 from denis.common.replacer import replacer
@@ -16,6 +17,11 @@ _to_substitute = util.flatten([_to_remove, [
 ]])
 _removal_pattern = replacer.prepare(_to_remove, onlyAtEnds=True)
 _substitution_pattern = replacer.prepare(_to_substitute, onlyAtEnds=False)
+
+_digit_normalizers = { 
+    r'^[0-9]{1,}(\.[0-9]{1,}){0,1}$': '[DIGITS]', 
+    r'^\$[0-9]{1,}(\.[0-9]{1,}){0,1}$': '[MONEY]'
+}
 
 def tokenize(line, clean=True, tolower=True, splitwords=False):
     tokens = line.strip().split()
@@ -35,3 +41,18 @@ def tokenize(line, clean=True, tolower=True, splitwords=False):
                 cleanTokens.append(token)
         tokens = cleanTokens
     return tokens
+
+def normalizeNumeric(text):
+    if type(text) == str:
+        tokens = text.split()
+
+    normalized = []
+    for t in tokens:
+        for (ptrn, sub) in _digit_normalizers.items():
+            t = re.sub(ptrn, sub, t)
+        normalized.append(t)
+
+    if type(text) == str:
+        return ' '.join(normalized)
+    else:
+        return normalized
