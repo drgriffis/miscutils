@@ -5,11 +5,12 @@ class replacer:
     Thanks to: http://stackoverflow.com/questions/6116978/python-replace-multiple-strings
     """
     @staticmethod
-    def prepare(repls, onlyAtEnds=False, multiOccur=True):
+    def prepare(rep, onlyAtEnds=False, multiOccur=True):
         '''Compiles and returns a regex matching the input list of strings to replace
         Note: returns two values wrapped as one; can feed tuple directly into apply
         '''
-        rep = {key: '' for key in repls}
+        if type(rep) == list:
+            rep = {key: '' for key in rep}
         rep = dict((re.escape(k), v) for k, v in rep.items())
         if onlyAtEnds:
             if multiOccur:
