@@ -36,3 +36,8 @@ class replacer:
     def remove(pattern_rep, text):
         pattern, _ = pattern_rep
         return pattern.sub('', str(text))
+
+    @staticmethod
+    def suball(pattern_rep, sub_with, text):
+        pattern, _ = pattern_rep
+        return pattern.sub(sub_with, str(text))
