@@ -83,6 +83,13 @@ class log:
                 raise Exception('Tracker is complete!')
 
     @staticmethod
+    def flushTracker(*args, message='', newline=True):
+        if log.tracker != None:
+            log.tracker.showProgress(*args)
+            if newline: log.writeln('\n%s' % message)
+            else: log.writeln(message)
+
+    @staticmethod
     def reset():
         if log.tracker != None:
             log.tracker.reset()
@@ -119,14 +126,17 @@ class ProgressTracker:
         self.sinceLastWrite += 1
         if self.sinceLastWrite >= self.writeInterval:
             self.sinceLastWrite = 0
-            if self.onIncrement:
-                # only call 3-arg onIncrement if we have a total we're counting towards
-                if self.total: self.onIncrement(self.current, self.total, args)
-                else: self.onIncrement(self.current, args)
+            self.showProgress(*args)
 
     def reset(self):
         self.current = 0
         self.sinceLastWrite = 0
+
+    def showProgress(self, *args):
+        if self.onIncrement:
+            # only call 3-arg onIncrement if we have a total we're counting towards
+            if self.total: self.onIncrement(self.current, self.total, args)
+            else: self.onIncrement(self.current, args)
 
 class Timer:
     def __init__(self):
