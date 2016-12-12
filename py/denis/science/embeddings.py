@@ -7,7 +7,6 @@ import sys
 import struct
 import array
 import codecs
-#from common.vocabio import VocabIO
 from denis.common.logging import log
 
 class Mode:
@@ -24,11 +23,12 @@ def read(fname, mode=Mode.Binary):
         wordmap[words[i]] = vectors[i]
     return wordmap
 
-def generateVocabFile(fname, mode, outfile):
-    '''Writes ordered vocabulary of vectors file to outfile
+def write(embeds, fname, mode=Mode.Binary):
+    '''Writes a dictionary of embeddings { term : embed}
+    to a file, in the format specified.
     '''
-    (words, _) = _read(fname, mode)
-    VocabIO.write(words, outfile)
+    if mode == Mode.Binary: _writeBin(embeds, fname)
+    else: raise NotImplemented()
 
 def _read(fname, mode):
     if mode == Mode.Text: (words, vectors) = _readTxt(fname)
@@ -39,11 +39,21 @@ def _readTxt(fname):
     '''Returns array of words and word embedding matrix
     '''
     words, vectors = [], []
-    for line in open(fname, 'r'):
+    hook = codecs.open(fname, 'r', 'utf-8')
+
+    # get summary info about vectors file
+    (numWords, dim) = (int(s.strip()) for s in hook.readline().split())
+
+    for line in hook:
         chunks = line.split()
-        word, vector = clean(chunks[0]), numpy.array([float(n) for n in chunks[1:]])
-        words.append(clean(word))
+        word, vector = chunks[0].strip(), numpy.array([float(n) for n in chunks[1:]])
+        words.append(word)
         vectors.append(vector)
+    hook.close()
+
+    assert len(words) == numWords
+    for v in vectors: assert len(v) == dim
+
     return (words, vectors)
 
 def _readBin(fname):
@@ -85,7 +95,8 @@ def _writeBin(wordmap, fname):
     # write vectors
     for word in wordmap.keys():
         outf.write(b'%s ' % word.encode('utf-8'))
-        wordmap.get(word).tofile(outf)
+        wordmap.get(word).astype('f').tofile(outf)
+        #wordmap.get(word).tofile(outf)
         outf.write(b'\n')
     outf.close()
 
@@ -109,3 +120,16 @@ def closestNeighbor(query, embedding_array, normed=False):
             for i in range(embedding_array.shape[0])
     ])
     return numpy.argmax(dists)
+
+def unitNorm(embeds):
+    for (k, embed) in embeds.items():
+        embeds[k] = numpy.array(
+            embed / numpy.linalg.norm(embed)
+        )
+
+def analogyQuery(embeds, a, b, c):
+    return (
+        numpy.array(embeds[b])
+        - numpy.array(embeds[a])
+        + numpy.array(embeds[c])
+    )

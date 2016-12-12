@@ -3,13 +3,14 @@ import time
 
 class log:
     logfile=sys.stdout
+    stdout_also=False
     stopped=False
     tracker=None
     timer=None
     autoflush=True
 
     @staticmethod
-    def start(message=None, logfile=None, args=None):
+    def start(message=None, logfile=None, args=None, stdout_also=False):
         if logfile and type(logfile) == type('a'):
             log.logfile=open(logfile, 'w')
         if message and type(message) == type(lambda x: x):
@@ -17,6 +18,7 @@ class log:
             else: message()
         elif message and type(message) == type('str'):
             log.writeln(message)
+        log.stdout_also=stdout_also
     @staticmethod
     def stop():
         if log.logfile != sys.stdout: 
@@ -27,6 +29,8 @@ class log:
         return log.logfile
     @staticmethod
     def write(message, stdoutOnly=False):
+        if log.stdout_also and (log.getstream() != sys.stdout):
+            sys.stdout.write(message)
         if stdoutOnly and log.getstream() != sys.stdout:
             return
         if not log.stopped:

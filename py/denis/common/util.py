@@ -15,7 +15,7 @@ def laxIncrement(dct, key, by=1):
         dct[key] += by
 
 def expectKey(dct, key, valIfNew):
-    if not dct.get(key):
+    if dct.get(key, None) is None:
         dct[key] = valIfNew
         return False
     else:
@@ -148,13 +148,13 @@ def matchesRegex(regex, string):
     mtch = re.match(regex, string)
     return mtch != None and mtch.span() != (0,0)
 
-def flatten(arr):
-    '''Given an array of N-dimensional objects (N can vary), returns 1-dimensional
+def flatten(*arr):
+    '''Given one or more N-dimensional objects (N can vary), returns 1-dimensional
     list of the contained objects.
     '''
     results = []
     for el in arr:
-        if type(el) == list or type(el) == tuple: results.extend(flatten(el))
+        if type(el) == list or type(el) == tuple or type(el) == type({}.values()): results.extend(flatten(*el))
         else: results.append(el)
     return results
 
