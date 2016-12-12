@@ -84,9 +84,16 @@ def transformDict(dct, tfrm):
         out[key] = val
     return out
 
-def reverseDict(dct):
-    reverse = lambda key, val: (val, key)
-    return transformDict(dct, reverse)
+def reverseDict(dct, allow_collisions=False):
+    if not allow_collisions:
+        reverse = lambda key, val: (val, key)
+        return transformDict(dct, reverse)
+    else:
+        rev = {}
+        for (k, v) in dct.items():
+            if rev.get(v, None) is None: rev[v] = []
+            rev[v].append(k)
+        return rev
 
 def replace(text, repls):
     pattern = replacer.prepare(repls)
