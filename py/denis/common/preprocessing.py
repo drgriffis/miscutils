@@ -45,6 +45,8 @@ def tokenize(line, clean=True, tolower=True, splitwords=False):
 def normalizeNumeric(text):
     if type(text) == str:
         tokens = text.split()
+    elif type(text) in [list, tuple]:
+        tokens = text
 
     normalized = []
     for t in tokens:
