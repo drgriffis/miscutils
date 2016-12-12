@@ -159,6 +159,41 @@ fi
 
 if [ -z $trgdate ]; then
     trgdate=$currentdate
+else
+    # fill in current year/month if necessary
+    nf=`echo $trgdate | awk -F "-" '{ print NF }'`
+    if [[ $nf = 1 ]]; then
+        # add leading 0 if necessary
+        if [[ ${#trgdate} = 1 ]]; then
+            trgdate="0${trgdate}"
+        fi
+        trgdate=`date "+%Y-%m"`-${trgdate}
+    elif [[ $nf = 2 ]]; then
+        day=`echo $trgdate | awk -F "-" '{ print $2 }'`
+        mth=`echo $trgdate | awk -F "-" '{ print $1 }'`
+        # add leading 0 to day if necessary
+        if [[ ${#day} = 1 ]]; then
+            day="0${day}"
+        fi
+        # add leading 0 to month if necessary
+        if [[ ${#mth} = 1 ]]; then
+            mth="0${mth}"
+        fi
+        trgdate=`date "+%Y"`-${mth}-${day}
+    elif [[ $nf = 3 ]]; then
+        day=`echo $trgdate | awk -F "-" '{ print $3 }'`
+        mth=`echo $trgdate | awk -F "-" '{ print $2 }'`
+        yer=`echo $trgdate | awk -F "-" '{ print $1 }'`
+        # add leading 0 to day if necessary
+        if [[ ${#day} = 1 ]]; then
+            day="0${day}"
+        fi
+        # add leading 0 to month if necessary
+        if [[ ${#mth} = 1 ]]; then
+            mth="0${mth}"
+        fi
+        trgdate=${yer}-${mth}-${day}
+    fi
 fi
 
 if [ -z $index ]; then
