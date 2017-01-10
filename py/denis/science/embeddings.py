@@ -133,3 +133,28 @@ def analogyQuery(embeds, a, b, c):
         - numpy.array(embeds[a])
         + numpy.array(embeds[c])
     )
+
+
+class NearestNeighbors:
+    '''Used to get nearest embeddings to a query by cosine distance.
+    '''
+    
+    def __init__(self, embeds):
+        e = embeds.copy()
+        unitNorm(e)
+
+        vocab = tuple(embeds.keys())
+        embed_array = []
+        for v in vocab:
+            embed_array.append(embeds[v])
+        self._vocab = numpy.array(vocab)
+        self._embed_array = numpy.transpose(numpy.array(embed_array))
+
+    def nearest(self, query, k=1):
+        indices = numpy.argsort(
+            numpy.matmul(
+                numpy.array(query),
+                self._embed_array
+            )
+        )
+        return self._vocab[indices][::-1][1:k+1]
