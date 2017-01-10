@@ -59,3 +59,5 @@ def _testrho():
     rho = SpearmansRho(valpairs)
 
     print('Expected: -0.1758   Actual: %.4f' % rho)
+if __name__ == '__main__':
+    _testrho()
