@@ -22,6 +22,33 @@ class PersistentResultsMatrix:
     def __repr__(self):
         return self._results.__repr__()
 
+    def __add__(self, x):
+        output = self.copy()
+        output._results += x
+        return output
+
+    def __sub__(self, x):
+        output = self.copy()
+        output._results -= x
+        return output
+
+    def __mul__(self, x):
+        output = self.copy()
+        output._results *= x
+        return output
+
+    def __truediv__(self, x):
+        output = self.copy()
+        output._results /= x
+        return output
+
+    def copy(self):
+        new = PersistentResultsMatrix(0)
+        new.path = self.path
+        new._results = self._results.copy()
+        new.shape = new._results.shape
+        return new
+
     def save(self, path=None):
         pth = path if path else self.path
         np.save(pth, self._results)
