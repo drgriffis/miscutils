@@ -99,7 +99,7 @@ def replace(text, repls):
     pattern = replacer.prepare(repls)
     return replacer.apply(pattern, text)
 
-def prepareForParallel(data, threads):
+def prepareForParallel(data, threads, data_only=False):
     '''Chunks list of data into disjoint subsets for each thread
     to process.
 
@@ -118,7 +118,8 @@ def prepareForParallel(data, threads):
         # last thread handles remainder of data
         else:
             threadchunks.append((startix, data[startix:]))
-    return threadchunks
+    if data_only: return [d for (ix, d) in threadchunks]
+    else: return threadchunks
 
 def parallelExecute(processes):
     '''Takes instances of multiprocessing.Process, starts them all executing,
