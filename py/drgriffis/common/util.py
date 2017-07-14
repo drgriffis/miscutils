@@ -179,3 +179,21 @@ def XMLValue(xml):
         return None
     else:
         return match[0][1:-2]
+
+def sortFrequencyDictionary(freq_dict, descending=True):
+    '''Returns a list of (item, frequency) pairs, in sorted order
+    '''
+    mapper = {}
+    for (item, freq) in freq_dict.items():
+        if mapper.get(freq, None) is None:
+            mapper[freq] = []
+        mapper[freq].append(item)
+
+    freqs = list(mapper.keys())
+    freqs.sort()
+    if descending: freqs.reverse()
+
+    sorted_pairs = []
+    for freq in freqs:
+        sorted_pairs.extend([(item, freq) for item in mapper[freq]])
+    return sorted_pairs
