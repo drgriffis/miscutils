@@ -4,8 +4,8 @@ Common text preprocessing methods
 
 import re
 import sys
-from denis.common import util
-from denis.common.replacer import replacer
+from drgriffis.common import util
+from drgriffis.common.replacer import replacer
 
 _to_remove = [
     '.', ',', '!', '?', ':', ';', '>', '<',
