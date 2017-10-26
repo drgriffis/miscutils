@@ -60,8 +60,11 @@ def writeList(fname, data, encoding='ascii'):
 def readList(fname, encoding='ascii', readas=str):
     '''Read a list of objects from a file, one per line
     '''
-    line_arrays = readCSV(fname, encoding=encoding, readas=readas)
-    return flatten(line_arrays)
+    data = []
+    with codecs.open(fname, 'r', encoding=encoding) as stream:
+        for line in stream:
+            data.append(readas(line.strip()))
+    return data
 
 def toCSV(data, sep=',', writeas=str):
     return '\n'.join([sep.join([writeas(c) for c in row]) for row in data])
