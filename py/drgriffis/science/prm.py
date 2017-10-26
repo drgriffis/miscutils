@@ -22,23 +22,28 @@ class PersistentResultsMatrix:
     def __repr__(self):
         return self._results.__repr__()
 
-    def __add__(self, x):
+    def __arithmetic_base__(self, x):
         output = self.copy()
+        if isinstance(x, PersistentResultsMatrix):
+            x = x._results
+        return (output, x)
+    def __add__(self, x):
+        output, x = self.__arithmetic_base__(x)
         output._results += x
         return output
 
     def __sub__(self, x):
-        output = self.copy()
+        output, x = self.__arithmetic_base__(x)
         output._results -= x
         return output
 
     def __mul__(self, x):
-        output = self.copy()
+        output, x = self.__arithmetic_base__(x)
         output._results *= x
         return output
 
     def __truediv__(self, x):
-        output = self.copy()
+        output, x = self.__arithmetic_base__(x)
         output._results /= x
         return output
 
