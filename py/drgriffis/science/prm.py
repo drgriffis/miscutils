@@ -8,8 +8,8 @@ class PersistentResultsMatrix:
     
     shape = None
     
-    def __init__(self, *args, path=None):
-        self.path = path
+    def __init__(self, *args, **kwargs):
+        self.path = kwargs['path']
         self._results = np.ones(args) * -1
         self.shape = self._results.shape
 

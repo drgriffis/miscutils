@@ -87,7 +87,9 @@ class log:
                 raise Exception('Tracker is complete!')
 
     @staticmethod
-    def flushTracker(*args, message='', newline=True):
+    def flushTracker(*args, **kwargs):
+        message = kwargs.get('message', '')
+        newline = kwargs.get('newline', True)
         if log.tracker != None:
             log.tracker.showProgress(*args)
             if newline: log.writeln('\n%s' % message)
