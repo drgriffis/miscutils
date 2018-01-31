@@ -5,7 +5,7 @@ Implements Spearman's Rho calculation.
 __all__= ['SpearmansRho']
 
 import numpy as np
-from denis.common import util
+from drgriffis.common import util
 
 def SpearmansRho(valpairs):
     '''Calculates Spearman's rank correlation coefficient (Spearman's rho)
