@@ -2,6 +2,7 @@ import sys
 import time
 
 class log:
+    logfile_path=None
     logfile=sys.stdout
     stdout_also=False
     stopped=False
@@ -10,8 +11,9 @@ class log:
     autoflush=True
 
     @staticmethod
-    def start(message=None, logfile=None, args=None, stdout_also=False):
+    def start(message=None, logfile=None, args=None, stdout_also=True):
         if logfile and type(logfile) == type('a'):
+            log.logfile_path=logfile
             log.logfile=open(logfile, 'w')
         if message and type(message) == type(lambda x: x):
             if args: message(args)
@@ -20,8 +22,12 @@ class log:
             log.writeln(message)
         log.stdout_also=stdout_also
     @staticmethod
-    def stop():
+    def stop(message=None, suppress=False):
+        if message:
+            log.writeln(message)
         if log.logfile != sys.stdout: 
+            if (not suppress) and log.logfile_path:
+                log.writeln('\nLog output saved to %s' % log.logfile_path)
             log.logfile.close()
         log.stopped = True
     @staticmethod
