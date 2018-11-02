@@ -63,7 +63,7 @@ class log:
         sys.stderr = log.getstream()
 
     @staticmethod
-    def track(total=None, message='{0}%', writeInterval=1, stdoutOnly=True):
+    def track(total=None, message='{0}%', writeInterval=1, stdoutOnly=False):
         # if message was given as a string, convert it to a lambda function
         if type(message) == type('str'):
             msgFormat = message 
@@ -75,14 +75,20 @@ class log:
         # set up the onIncrement lambda for current/total or current only
         if total:
             onIncrement = lambda current, total, args: log.write(
+                str.format('\r{0}', message(current, total, args)), stdoutOnly=True
+            )
+            onFlush = lambda current, total, args: log.write(
                 str.format('\r{0}', message(current, total, args)), stdoutOnly=stdoutOnly
             )
         else:
             onIncrement = lambda current, args: log.write(
+                str.format('\r{0}', message(current, args)), stdoutOnly=True
+            )
+            onFlush = lambda current, args: log.write(
                 str.format('\r{0}', message(current, args)), stdoutOnly=stdoutOnly
             )
 
-        log.tracker = ProgressTracker(total, onIncrement=onIncrement, writeInterval=writeInterval)
+        log.tracker = ProgressTracker(total, onIncrement=onIncrement, onFlush=onFlush, writeInterval=writeInterval)
 
     @staticmethod
     def tick(*args):
@@ -97,7 +103,7 @@ class log:
         message = kwargs.get('message', '')
         newline = kwargs.get('newline', True)
         if log.tracker != None:
-            log.tracker.showProgress(*args)
+            log.tracker.flush(*args)
             if newline: log.writeln('\n%s' % message)
             else: log.writeln(message)
 
@@ -126,11 +132,12 @@ class log:
             raise Exception('No timer to stop!')
 
 class ProgressTracker:
-    def __init__(self, total=None, onIncrement=None, writeInterval=1):
+    def __init__(self, total=None, onIncrement=None, onFlush=None, writeInterval=1):
         self.total = total
         self.current = 0
         self.sinceLastWrite = 0
         self.onIncrement = onIncrement
+        self.onFlush = onFlush
         self.writeInterval = writeInterval
 
     def increment(self, *args):
@@ -149,6 +156,12 @@ class ProgressTracker:
             # only call 3-arg onIncrement if we have a total we're counting towards
             if self.total: self.onIncrement(self.current, self.total, args)
             else: self.onIncrement(self.current, args)
+
+    def flush(self, *args):
+        if self.onFlush:
+            # only call 3-arg onIncrement if we have a total we're counting towards
+            if self.total: self.onFlush(self.current, self.total, args)
+            else: self.onFlush(self.current, args)
 
 class Timer:
     def __init__(self):
